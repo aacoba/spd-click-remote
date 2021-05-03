@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"time"
 
 	"gitlab.com/gomidi/midi"
@@ -14,6 +16,9 @@ import (
 )
 
 func main() {
+	var midiInNumber = flag.Int("midiIn", 0, "The MIDI IN device name to use")
+	flag.Parse()
+
 	drv, err := driver.New()
 	must(err)
 
@@ -22,7 +27,15 @@ func main() {
 	ins, err := drv.Ins()
 	must(err)
 
-	in := ins[1]
+	printInPorts(ins)
+
+	if len(ins)-1 < *midiInNumber {
+		log.Fatalf("MIDI Port [%d] does not exist", *midiInNumber)
+	}
+
+	in := ins[*midiInNumber]
+
+	log.Printf("Using MIDI IN [%s]", in.String())
 
 	must(in.Open())
 
@@ -40,6 +53,18 @@ func main() {
 	must(err)
 	select {}
 
+}
+
+func printPort(port midi.Port) {
+	fmt.Printf("[%v] %s\n", port.Number(), port.String())
+}
+
+func printInPorts(ports []midi.In) {
+	fmt.Printf("MIDI IN Ports\n")
+	for _, port := range ports {
+		printPort(port)
+	}
+	fmt.Printf("\n\n")
 }
 
 func forever() {

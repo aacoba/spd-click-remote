@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,8 +24,10 @@ type MidiChannels struct {
 
 // This example reads from the first input and and writes to the first output port
 func main() {
-	// you would take a real driver here e.g. rtmididrv.New()
-	// drv := driver.New("fake cables: messages written to output port 0 are received on input port 0")
+	var midiOutNumber = flag.Int("midiOut", 0, "The MIDI OUT device name to use")
+	var midiInNumber = flag.Int("midiIn", 0, "The MIDI IN device name to use")
+	flag.Parse()
+
 	drv, err := driver.New()
 	must(err)
 
@@ -37,7 +40,18 @@ func main() {
 	outs, err := drv.Outs()
 	must(err)
 
-	in, out := ins[1], outs[1]
+	if len(outs)-1 < *midiOutNumber {
+		log.Fatalf("MIDI Port [%d] does not exist", *midiOutNumber)
+	}
+
+	if len(outs)-1 < *midiInNumber {
+		log.Fatalf("MIDI Port [%d] does not exist", *midiInNumber)
+	}
+
+	in, out := ins[*midiInNumber], outs[*midiOutNumber]
+
+	log.Printf("Using MIDI IN [%s]", in.String())
+	log.Printf("Using MIDI OUT [%s]", out.String())
 
 	must(in.Open())
 	must(out.Open())
